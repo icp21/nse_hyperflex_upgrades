@@ -34,7 +34,7 @@ flowchart TD
   K --> L[Sub-step 3a: UCS Server Firmware HUU<br/>Rolling upgrade<br/>20-40 min per node]
   L --> M{HUU Upgrade<br/>Successful?}
   M -->|No| N[Stop HUU job<br/>Restore UCS config<br/>Open TAC Case]
-  M -->|Yes| O[Sub-step 3b: HXDP Upgrade<br/>to 5.5(2b)<br/>60-120 min]
+  M -->|Yes| O[Sub-step 3b: HXDP Upgrade<br/>to 5.5.2b<br/>60-120 min]
   
   O --> P{HXDP Upgrade<br/>Successful?}
   P -->|No| Q[Stop HXDP upgrade<br/>Open TAC Case]
