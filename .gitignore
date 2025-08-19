@@ -1,0 +1,3 @@
+# Ignore all Hypercheck report directories and their contents
+KOH-HX-VDI-Cluster_Hypercheck_Report_*/
+KOH-VMW-MGMT-Cluster_Hypercheck_Report_*/
