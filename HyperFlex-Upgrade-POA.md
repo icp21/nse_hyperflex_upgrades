@@ -218,6 +218,7 @@ show fabric-interconnect detail
 show server status
 show fault
 ```
+https://www.dell.com/support/kbdoc/en-in/000205766/best-practice-procedure-for-rebooting-ucs-fabric-interconnects
 
 Rollback:
 - If failure: attempt previous image activation (startup version), keep other FI stable; TAC.
