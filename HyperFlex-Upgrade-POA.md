@@ -17,46 +17,24 @@ This document follows the Cisco-prescribed upgrade sequence for Fabric Interconn
 
 ```mermaid
 flowchart TD
-  A[Start Upgrade Process] --> B[Pre-Window Checklist & Inventory]
-  B --> C{All Prereqs Complete?}
+  A[Start] --> B[Pre-Window Checklist]
+  B --> C{Prereqs OK?}
   C -->|No| B
-  C -->|Yes| D[Final Pre-Window Checks]
-
-  D --> E[Step 1 HXDP 5.0.2e to 5.5(2b) 60-120m]
-  E --> F{HXDP Success?}
-  F -->|No| G[Stop & TAC]
-  F -->|Yes| H[Step 2 vCenter 7.0U3 to 8.0U3 60-90m]
-
-  H --> I{vCenter Success?}
-  I -->|No| J[Rollback vCenter & TAC]
-  I -->|Yes| K[Step 3 ESXi 7.0U3 to 8.0U3 Rolling 45-90m/host]
-
-  K --> L{All Hosts Success?}
-  L -->|No| M[Rollback Host & TAC]
-  L -->|Yes| N[Step 4 FI 4.2(3h) to 4.2(3o) 30-60m]
-
-  N --> O{FI Success?}
-  O -->|No| P[Rollback FI & TAC]
-  O -->|Yes| Q[Step 5 Server FW to 4.2(3o) 20-40m/node]
-
-  Q --> R{All Nodes Success?}
-  R -->|No| S[Stop HUU & TAC]
-  R -->|Yes| T[Post-Validation Checks]
-
-  T --> U{All Validation Passed?}
-  U -->|No| V[Investigate / TAC]
-  U -->|Yes| W[Re-enable Services]
-  W --> X[Upgrade Complete]
-
-  G --> Z[End - Failed]
-  J --> Z
-  M --> Z
-  P --> Z
-  S --> Z
-  V --> AA{Critical Issues?}
-  AA -->|Yes| Z
-  AA -->|No| W
-  X --> BB[End - Success]
+  C -->|Yes| D[Final Checks]
+  D --> E[Step1 HXDP 5.0.2e->5.5.2b 60-120m]
+  E -->|Fail| Z[Stop & TAC]
+  E -->|Pass| F[Step2 vCenter 7.0U3->8.0U3 60-90m]
+  F -->|Fail| Z
+  F -->|Pass| G[Step3 ESXi 7.0U3->8.0U3 roll 45-90m/host]
+  G -->|Host Fail| Z
+  G -->|All Hosts OK| H[Step4 FI 4.2.3h->4.2.3o 30-60m]
+  H -->|Fail| Z
+  H -->|Pass| I[Step5 Server FW ->4.2.3o 20-40m/node]
+  I -->|Node Fail| Z
+  I -->|All Nodes OK| J[Step6 Post Validation]
+  J --> K[Upgrade Complete]
+  Z --> L[End - Failed]
+  K --> M[End - Success]
 ```
 
 
