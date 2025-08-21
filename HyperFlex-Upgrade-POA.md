@@ -86,9 +86,7 @@ Key preparation items:
 | **Post-Upgrade** | Post-Validation Checks | Comprehensive validation of all upgraded components | Must pass all checks before declaring success | Run hxcli cluster show, verify all component versions | 30 min |
 | **Post-Upgrade** | Verify Cluster Health | Check cluster status ('Ruthenium state: online, healthy') and all CVMs show HXDP 5.5(2b) | Ensures no residual issues from upgrade | Run hxcli cluster info and verify health metrics | 30 min |
 | **Post-Upgrade** | Validate VM Functionality | Ensure VMs are running and can be migrated via vMotion. Test DRS/HA functionality | Confirms system stability post-upgrade | Test VM migration and verify no affinity rule conflicts | 45 min |
-| **Post-Upgrade** | Check Replication and Drives | Verify data replication compliance, datastores intact, and replication intact | Ensures data integrity and cluster resiliency | Confirm replication factor and drive status in HX Connect | 30 min |
 | **Post-Upgrade** | Re-enable Services | Re-enable SIOC and other services if disabled during upgrade | Services may have been disabled for upgrade stability | Verify all services are operational and configured correctly | 30 min |
-| **Post-Upgrade** | Monitor Logs | Review upgrade logs for errors or warnings in HX Connect, ESXi, and UCS Manager | Identifies any issues requiring TAC intervention | Check logs in HX Connect or CLI for error messages | 30 min |
 
 
 ## Detailed Runbook
