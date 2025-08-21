@@ -9,55 +9,54 @@ This document follows the Cisco-prescribed upgrade sequence for Fabric Interconn
 | **HyperFlex Data Platform (HXDP)** | 5.0.2e | 5.5(2b) | Major version upgrade |
 | **ESXi** | 7.0.3 24723872 | 8.0U3-24674464 | Major version upgrade |
 | **vCenter** | 7.0.3 24730281 | 8.0 U3 | Major version upgrade |
-| **UCS Manager (UCSM)** | 4.2(3H) | 4.3.5d | Infrastructure firmware upgrade |
-| **UCS C-Series Server Firmware** | Unknown | 4.2.3o | Requires validation of current version |
+| **UCS Manager (UCSM)** | 4.2(3h) | 4.2(3o) | Infrastructure firmware upgrade (safe path stays on 4.2 train) |
+| **UCS C-Series Server Firmware** | Unknown | 4.2(3o) | Requires validation of current version |
 
 
 ## Upgrade Flow Chart
 
 ```mermaid
 flowchart TD
-  A[Start Upgrade Process] --> B[Pre-Window Checklist<br/>48-72 hrs before]
-  B --> C{All Prerequisites<br/>Complete?}
+  A[Start Upgrade Process] --> B[Pre-Window Checklist & Inventory<br/>48-72 hrs before]
+  B --> C{All Prereqs Complete?}
   C -->|No| B
   C -->|Yes| D[Final Pre-Window Checks<br/>T-60m]
-  
-  D --> E[Step 1: Upgrade vCenter<br/>to v8.0.x<br/>60-90 min]
-  E --> F{vCenter Upgrade<br/>Successful?}
-  F -->|No| G[Rollback vCenter<br/>Open TAC Case]
-  F -->|Yes| H[Step 2: Upgrade UCS Infrastructure Firmware<br/>Fabric Interconnect A/B<br/>30-60 min]
-  
-  H --> I{FI Upgrade<br/>Successful?}
-  I -->|No| J[Rollback FI<br/>Open TAC Case]
-  I -->|Yes| K[Step 3: Upgrade UCS Firmware, HXDP and ESXi]
-  
-  K --> L[Sub-step 3a: UCS Server Firmware HUU<br/>Rolling upgrade<br/>20-40 min per node]
-  L --> M{HUU Upgrade<br/>Successful?}
-  M -->|No| N[Stop HUU job<br/>Restore UCS config<br/>Open TAC Case]
-  M -->|Yes| O[Sub-step 3b: HXDP Upgrade<br/>to 5.5.2b<br/>60-120 min]
-  
-  O --> P{HXDP Upgrade<br/>Successful?}
-  P -->|No| Q[Stop HXDP upgrade<br/>Open TAC Case]
-  P -->|Yes| R[Sub-step 3c: ESXi Host Upgrade<br/>to 8.0 U3<br/>45-90 min per host]
-  
-  R --> S{ESXi Upgrade<br/>Successful?}
-  S -->|No| T[Rollback ESXi<br/>Open TAC Case]
-  S -->|Yes| U[Post-Validation Checks]
-  
-  U --> V{All Validation<br/>Passed?}
-  V -->|No| W[Investigate Issues<br/>Contact TAC if needed]
-  V -->|Yes| X[Re-enable Services<br/>SIOC, etc.]
-  X --> Y[Upgrade Complete]
-  
+
+  D --> E[Step 1: HXDP 5.0.2e→5.5(2b)<br/>60-120m]
+  E --> F{HXDP Success?}
+  F -->|No| G[Stop & TAC]
+  F -->|Yes| H[Step 2: vCenter 7.0U3→8.0U3<br/>60-90m]
+
+  H --> I{vCenter Success?}
+  I -->|No| J[Rollback vCenter & TAC]
+  I -->|Yes| K[Step 3: ESXi 7.0U3→8.0U3 (Rolling)<br/>45-90m/host]
+
+  K --> L{All Hosts Success?}
+  L -->|No| M[Rollback Host & TAC]
+  L -->|Yes| N[Step 4: FI 4.2(3h)→4.2(3o)<br/>30-60m]
+
+  N --> O{FI Success?}
+  O -->|No| P[Rollback FI & TAC]
+  O -->|Yes| Q[Step 5: Server FW to 4.2(3o)<br/>20-40m/node]
+
+  Q --> R{All Nodes Success?}
+  R -->|No| S[Stop HUU & TAC]
+  R -->|Yes| T[Post-Validation Checks]
+
+  T --> U{All Validation Passed?}
+  U -->|No| V[Investigate / TAC]
+  U -->|Yes| W[Re-enable Services]
+  W --> X[Upgrade Complete]
+
   G --> Z[End - Failed]
   J --> Z
-  N --> Z
-  Q --> Z
-  T --> Z
-  W --> AA{Critical<br/>Issues?}
+  M --> Z
+  P --> Z
+  S --> Z
+  V --> AA{Critical Issues?}
   AA -->|Yes| Z
-  AA -->|No| X
-  Y --> BB[End - Success]
+  AA -->|No| W
+  X --> BB[End - Success]
 ```
 
 
@@ -66,10 +65,11 @@ flowchart TD
 https://software.cisco.com/download/home/286305544/type/286305994/release/5.5(2b)
 storfs-packages-5.5.2b-43453.tgz
 HX-ESXi-8.0U3-24674464-Cisco-Custom-8.0.3.7-upgrade-bundle.zip
-ucs-6400-k9-bundle-infra.4.3.5d.A.bin
+ucs-6400-k9-bundle-infra.4.2.3o.A.bin
 ucs-k9-bundle-b-series.4.2.3o.B.bin
 ucs-k9-bundle-c-series.4.2.3o.C.bin
-ucs-6400-k9-bundle-infra.4.2.3o.A.bin
+
+Note: `ucs-6400-k9-bundle-infra.4.3.5d.A.bin` intentionally omitted in safe sequence (remaining on 4.2 train).
 
 
 
@@ -104,11 +104,11 @@ Key preparation items:
 | **Pre-Upgrade** | Open Proactive TAC Case | Create Cisco TAC case with upgrade plan, cluster details, and maintenance window | Ensures TAC support availability during upgrade window | Verify TAC case is active and response team assigned | 30 min |
 | **Pre-Upgrade** | Stakeholder Notification | Notify all stakeholders of upgrade plan and maintenance window | Ensures business alignment and communication | Confirm all stakeholders acknowledged upgrade plan | 15 min |
 | **Execution** | Final Pre-Window Checks (T-60m) | Verify all pre-upgrade items completed, TAC case ready, team present | Critical go/no-go validation before starting upgrade | All items must be GREEN to proceed | 60 min |
-| **Execution** | Step 1: Upgrade vCenter to v8.0.x | Perform VCSA upgrade (stage 1 & 2) per VMware KB | vCenter must be upgraded before ESXi. Create final backup first | Validate vCenter services and vCLS VMs | 60-90 min |
-| **Execution** | Step 2: Upgrade UCS Infrastructure (FI A/B) | Upload FI firmware, upgrade subordinate FI first, then primary FI | MUST preserve HA. Verify data paths before primary FI reboot | Verify cluster state, data paths, and firmware versions | 30-60 min |
-| **Execution** | Step 3a: UCS Server Firmware (HUU) Rolling | Apply HUU firmware to all servers one at a time via HX Connect | Upload HUU bundle, rolling upgrade maintains cluster availability | Validate server firmware versions after each node | 20-40 min per node |
-| **Execution** | Step 3b: HXDP Upgrade to 5.5(2b) | Upload HXDP bundle, perform cluster rolling upgrade of all CVMs | 8-node cluster performs sequential CVM upgrades | Monitor CVM upgrades, verify cluster health with hxcli cluster show | 60-120 min |
-| **Execution** | Step 3c: ESXi Host Upgrade to 8.0 U3 | Rolling upgrade using HX Connect with Cisco offline bundle | Preferred method via HX Connect, manual esxcli as backup | Host summary shows ESXi 8.0 U3, verify maintenance mode cycles | 45-90 min per host |
+| **Execution** | Step 1: HXDP Upgrade to 5.5(2b) | Rolling CVM upgrade first to establish platform baseline | Eliminates unsupported interim with newer vCenter/ESXi | hxcli cluster show/info healthy each CVM | 60-120 min |
+| **Execution** | Step 2: vCenter Upgrade to 8.0 U3 | Perform VCSA upgrade (Stage 1 & 2) | Supported combo with HXDP 5.5(2b) | vCenter services & vCLS VMs healthy | 60-90 min |
+| **Execution** | Step 3: ESXi Host Upgrade to 8.0 U3 | Rolling upgrade via HX Connect | One host at a time to preserve availability | Host summary shows ESXi 8.0 U3 | 45-90 min per host |
+| **Execution** | Step 4: FI Infrastructure 4.2(3h)→4.2(3o) | Subordinate then primary | Preserve HA; validate data paths | show cluster extended-state; show fault | 30-60 min |
+| **Execution** | Step 5: Server Firmware (HUU) to 4.2(3o) | Rolling per node | Can swap with Step 4 if preferred | show server inventory; hxcli healthy | 20-40 min per node |
 | **Post-Upgrade** | Post-Validation Checks | Comprehensive validation of all upgraded components | Must pass all checks before declaring success | Run hxcli cluster show, verify all component versions | 30 min |
 | **Post-Upgrade** | Verify Cluster Health | Check cluster status ('Ruthenium state: online, healthy') and all CVMs show HXDP 5.5(2b) | Ensures no residual issues from upgrade | Run hxcli cluster info and verify health metrics | 30 min |
 | **Post-Upgrade** | Validate VM Functionality | Ensure VMs are running and can be migrated via vMotion. Test DRS/HA functionality | Confirms system stability post-upgrade | Test VM migration and verify no affinity rule conflicts | 45 min |
@@ -134,212 +134,177 @@ Detailed step-by-step runbook following the prescribed upgrade sequence
 
 ---
 
-### Step 1 — vCenter Upgrade to v8.0.x (60-90 minutes)
+### Step 1 — HXDP Upgrade 5.0.2e → 5.5(2b) (60–120 minutes)
 
-**Goal**: Upgrade vCenter to v8.0 U3 before ESXi upgrades per Cisco sequence
+Goal: Establish supported data platform baseline first to avoid interim incompatibilities.
 
-**Prerequisites:**
-- Final vCenter backup completed
-- All Pre-Upgrade validations passed
+Prerequisites:
+- Cluster healthy (hxcli cluster show/info)
+- Storage utilization < 76%
+- Eligibility & hypercheck clean
+- Proactive TAC case active
 
-**Execution:**
-1. **Create final vCenter backup**
-2. **Download vCenter 8.0 U3 ISO from VMware**
-3. **Perform VCSA upgrade (Stage 1 & 2) per VMware documentation**
-  - Stage 1: Install new vCenter appliance
-  - Stage 2: Data migration and configuration transfer
-4. **Monitor upgrade progress and logs**
+Execution:
+1. Upload HXDP bundle `storfs-packages-5.5.2b-43453.tgz` in HX Connect → Upgrades → Data Platform
+2. Run pre-checks and remediate any warnings (STOP on failures)
+3. Start rolling upgrade – CVMs upgrade sequentially (expect 10–15 min each + services settle)
+4. After each CVM completion: verify cluster health (hxcli cluster show)
 
-**Validation:**
-- vCenter services operational
-- vCenter Lifecycle Manager (vCLS) VMs healthy
-- All hosts visible and manageable
-- No critical alarms or errors
-
-**Rollback Plan:**
-- If upgrade fails: Restore from backup, open TAC case
-- **STOP**: Do not proceed to infrastructure upgrades if vCenter upgrade fails
-
----
-
-### Step 2 — UCS Infrastructure Firmware Upgrade (30-60 minutes)
-
-**Goal**: Upgrade Fabric Interconnect A/B to qualified firmware while preserving HA
-
-**Prerequisites:**
-- vCenter upgrade completed successfully
-- UCS Manager accessible and stable
-
-**Phase 2A - Upload FI Image:**
-- Upload FI firmware bundle to UCSM: Equipment → Fabric Interconnects → Firmware Management → Downloaded Images
-- Verify image integrity: `ucs-6400-k9-bundle-infra.4.3.5d.A.bin`
-
-**Phase 2B - Upgrade Subordinate FI First:**
-1. Identify subordinate FI: Equipment → Fabric Interconnects → check HA Status
-2. Navigate to: Equipment → Fabric Interconnects → [Subordinate-FI] → General → Firmware Management → Update Firmware
-3. Select uploaded firmware bundle and click OK
-4. **Monitor FI reboot and comeback (20-30 minutes)**
-
-**Phase 2C - Critical Validation Before Primary FI Upgrade:**
-
+Validation:
 ```bash
-# 1. Verify cluster state and HA status:
-UCSM-A# show cluster extended-state
-# Verify: Both FIs show UP, mgmt services UP, HA READY
-
-# 2. Verify Fibre Channel data paths (if applicable):
-UCSM-A# connect nxos a
-UCSM-A(nxos)# show npv flogi-table
-UCSM-A(nxos)# exit
-
-UCSM-A# connect nxos b  
-UCSM-A(nxos)# show npv flogi-table
-UCSM-A(nxos)# exit
-# Record total flogis for both FIs - numbers should match
-
-# 3. Verify Ethernet data paths:
-UCSM-A# connect nxos a
-UCSM-A(nxos)# show int br | grep -v down | wc -l
-UCSM-A(nxos)# exit
-
-UCSM-A# connect nxos b
-UCSM-A(nxos)# show int br | grep -v down | wc -l  
-UCSM-A(nxos)# exit
-
-# 4. Check for active faults:
-UCSM-A# show fault
-# Clear any critical faults before proceeding
-```
-
-**Phase 2D - Upgrade Primary FI:**
-1. **ONLY proceed if ALL validations pass**
-2. Follow same firmware update procedure for primary FI
-3. **Monitor primary FI reboot (20-30 minutes)**
-4. System will be briefly single-homed during primary FI reboot
-
-**Phase 2E - Final FI Validation:**
-```bash
-# Verify HA restoration and data paths
-UCSM-A# show cluster extended-state
-UCSM-A# show fabric-interconnect detail
-UCSM-A# show server status
-UCSM-A# show fault
-```
-
-**Rollback Plan:**
-- If FI upgrade fails: Restore previous firmware, open TAC case
-
----
-
-### Step 3 — Combined UCS, HXDP, and ESXi Upgrades
-
-**Goal**: Perform coordinated upgrade of server firmware, HXDP, and ESXi in sequence
-
-#### Step 3a — UCS Server Firmware (HUU) Rolling Upgrade (4-6 hours for 8 nodes)
-
-**Prerequisites:**
-- UCS Infrastructure firmware upgrade completed successfully
-- All FI paths operational and validated
-
-**Execution:**
-1. **Upload HUU bundle to HX Connect**: `ucs-k9-bundle-b-series.4.2.3o.B.bin` and `ucs-k9-bundle-c-series.4.2.3o.C.bin`
-2. **HX Connect → Upgrades → Hardware → Host Firmware Upgrade**
-3. **Select rolling upgrade option (one node at a time)**
-4. **Monitor each node upgrade (20-40 minutes per node)**
-
-**Per Node Process:**
-- Host enters maintenance mode automatically
-- Node reboots and firmware applied
-- Host returns to cluster
-- **Validate server firmware version in UCS Manager before proceeding to next node**
-
-**Validation After Each Node:**
-```bash
-# Check cluster health
-hxcli cluster show
-
-# Verify UCS server firmware
-UCSM-A# show server inventory
-```
-
-**Rollback Plan:**
-- If node fails to boot: Stop HUU job, restore UCS config, open TAC case
-
-#### Step 3b — HXDP Upgrade to 5.5(2b) (60-120 minutes)
-
-**Prerequisites:**
-- UCS server firmware upgrade completed successfully
-- Cluster health verified: `hxcli cluster show`
-
-**Execution:**
-1. **Upload HXDP bundle to HX Connect**: `storfs-packages-5.5.2b-43453.tgz`
-2. **HX Connect → Upgrades → Data Platform**
-3. **Select management cluster and run prechecks**
-4. **Monitor CVM rolling upgrades** (8 CVMs will upgrade sequentially)
-5. **Verify cluster health throughout process**
-
-**Validation:**
-```bash
-# Verify HXDP version and cluster health
 hxcli cluster show
 hxcli cluster info
-
-# Confirm all CVMs running HXDP 5.5(2b)
 hxcli cluster storage-summary
 ```
+All CVMs must report 5.5(2b), no degraded components.
 
-**Rollback Plan:**
-- If HXDP upgrade fails: Stop upgrade, run hypercheck, open TAC case
-- **DO NOT proceed to ESXi upgrades if HXDP fails**
+Rollback:
+- If a CVM fails upgrade or health degrades: pause, collect logs (hxcli log collect), engage TAC. Do not advance sequence until resolved.
 
-#### Step 3c — ESXi Host Upgrade to 8.0 U3 (8-12 hours for 8 hosts)
+---
 
-**Prerequisites:**
-- HXDP upgrade completed successfully
-- All CVMs running HXDP 5.5(2b)
-- vCenter 8.0 operational
+### Step 2 — vCenter Upgrade 7.0 U3 → 8.0 U3 (60–90 minutes)
 
-**Execution (Preferred Method - HX Connect):**
-1. **Upload Cisco ESXi bundle**: `HX-ESXi-8.0U3-24674464-Cisco-Custom-8.0.3.7-upgrade-bundle.zip`
-2. **HX Connect → Upgrades → Host Upgrade**
-3. **Select all hosts for rolling upgrade**
-4. **Choose Cisco ESXi 8.0 U3 bundle**
-5. **Monitor host evacuation, upgrade, and return (45-90 minutes per host)**
+Goal: Upgrade management plane now that HXDP is at 5.5(2b).
 
-**Per Host Process:**
-- vMotion evacuates VMs from host
-- Host enters maintenance mode
-- ESXi upgrade applied
-- Host reboots and rejoins cluster
-- **Validate ESXi version before proceeding to next host**
+Prerequisites:
+- HXDP 5.5(2b) stable
+- Recent VCSA backup & (optional) snapshot
+- DNS, NTP verified
 
-**Manual esxcli Template (Backup Method):**
+Execution:
+1. Launch installer ISO (mac/Win) → Stage 1 deploy new appliance
+2. Stage 2 data migration & configuration
+3. Monitor installer progress & VAMI (https://vc:5480)
+4. Remove snapshot after success (if used)
+
+Validation:
+- Services: All green in VAMI
+- vCLS VMs healthy
+- Inventory & permissions intact
+
+Rollback:
+- Failure during Stage 2: power off new appliance, restore original from backup; engage TAC.
+
+---
+
+### Step 3 — ESXi Host Upgrade 7.0 U3 → 8.0 U3 (Rolling, 45–90 min/host)
+
+Goal: Upgrade hypervisor layer under upgraded HXDP & vCenter.
+
+Prerequisites:
+- HXDP 5.5(2b) & vCenter 8.0 U3 healthy
+- vMotion & DRS operational; no resync / rebuild backlog
+- Sufficient cluster capacity N+1
+
+Execution (HX Connect preferred):
+1. Upload `HX-ESXi-8.0U3-24674464-Cisco-Custom-8.0.3.7-upgrade-bundle.zip`
+2. Initiate rolling host upgrade (one at a time) via HX Connect → Upgrades → Host Upgrade
+3. For each host: evacuate VMs (vMotion), enter maintenance mode, apply bundle, reboot, exit maintenance
+4. Confirm host rebalances before next
+
+Fallback Manual (esxcli):
 ```bash
-# Put host into maintenance mode
 vim-cmd hostsvc/maintenance_mode_enter
-
-# List available profiles
 esxcli software sources profile list -d /vmfs/volumes/<DATASTORE>/HX-ESXi-8.0U3-24674464-Cisco-Custom-8.0.3.7-upgrade-bundle.zip
-
-# Apply upgrade profile
 esxcli software profile update -d /vmfs/volumes/<DATASTORE>/HX-ESXi-8.0U3-24674464-Cisco-Custom-8.0.3.7-upgrade-bundle.zip -p HX-ESXi-8.0U3-24674464-Cisco-Custom-8.0.3.7
-
-# Reboot and exit maintenance mode
 reboot
 vim-cmd hostsvc/maintenance_mode_exit
 ```
 
-**Validation After Each Host:**
-- Host summary shows ESXi 8.0 U3
-- Host operational in cluster
-- No VM placement issues
+Validation Per Host:
+- Version shows ESXi 8.0 U3
+- Host rejoined cluster; no new PSOD / hardware alarms
+- HX cluster healthy (hxcli cluster show)
 
-**Rollback Plan:**
-- If ESXi upgrade fails: Rollback to previous version, open TAC case
+Rollback:
+- Attempt alt boot option (previous ESXi) or reinstall previous image profile; engage TAC.
 
 ---
 
-### Step 4 — Post-Validation and Service Restoration (60-90 minutes)
+### Step 4 — Fabric Interconnect Infrastructure Firmware 4.2(3h) → 4.2(3o) (30–60 minutes)
+
+Goal: Move FIs within 4.2 train after compute layer stable.
+
+Prerequisites:
+- ESXi fleet upgraded (or deviation approved via TAC)
+- UCS cluster HA: subordinate identified; no critical faults
+
+Execution:
+1. Upload infra bundle `ucs-6400-k9-bundle-infra.4.2.3o.A.bin`
+2. Upgrade subordinate FI first; monitor reboot (20–30m)
+3. Validate:
+```bash
+show cluster extended-state
+show fault
+```
+4. Upgrade primary FI; brief single-homed period; monitor services
+5. Final validation:
+```bash
+show cluster extended-state
+show fabric-interconnect detail
+show server status
+show fault
+```
+
+Rollback:
+- If failure: attempt previous image activation (startup version), keep other FI stable; TAC.
+
+---
+
+### Step 5 — Server (B/C Series) Firmware (HUU) to 4.2(3o) (20–40 min/node)
+
+Goal: Align server firmware with infra version 4.2(3o); maintains supported matrix.
+
+Prerequisites:
+- FI pair on 4.2(3o) stable
+- HX cluster healthy; capacity normal; no rebuild backlog
+
+Execution:
+1. Upload `ucs-k9-bundle-b-series.4.2.3o.B.bin` & `ucs-k9-bundle-c-series.4.2.3o.C.bin`
+2. HX Connect → Upgrades → Hardware → Host Firmware Upgrade → Rolling
+3. Per node: maintenance mode -> firmware apply -> reboot -> exit maintenance
+4. Verify firmware inventory before next node
+
+Validation:
+```bash
+hxcli cluster show
+show server inventory
+```
+
+Rollback:
+- Halt job; do not proceed to next node; restore prior package if possible; TAC.
+
+---
+
+### Step 6 — Post-Validation & Service Restoration (60–90 minutes)
+
+Comprehensive System Validation:
+1. Cluster Health:
+```bash
+hxcli cluster show
+hxcli cluster info
+hxcli cluster storage-summary
+```
+2. Version Audit:
+  - vCenter 8.0 U3
+  - ESXi 8.0 U3 on all hosts
+  - HXDP 5.5(2b) on all CVMs
+  - FI firmware 4.2(3o) (both)
+  - Server firmware 4.2(3o)
+3. Functional Tests: vMotion, DRS/HA, datastore accessibility, VM performance spot-check
+4. Data Integrity: replication factor compliance, no degraded disks
+5. Services: re-enable SIOC / any temporarily disabled features
+6. Log Review: HX Connect, VCSA tasks/events, UCS faults, ESXi host logs
+
+Acceptance Criteria (all TRUE): versions correct, cluster healthy, no critical faults, workloads stable.
+
+Completion:
+- Update TAC & stakeholders
+- Capture runbook deviations & lessons learned
+- Schedule 24h post-monitor review
+
+---
 
 **Comprehensive System Validation:**
 
@@ -357,7 +322,7 @@ hxcli cluster storage-summary
   - **vCenter**: Confirm v8.0 U3
   - **ESXi**: All hosts show ESXi 8.0 U3
   - **HXDP**: All CVMs show 5.5(2b)
-  - **UCS Firmware**: Confirm 4.3.5d (FI) and 4.2.3o (servers)
+  - **UCS Firmware**: Confirm FI 4.2(3o) and servers 4.2(3o)
 
 3. **Functional Testing:**
   - **Test vMotion between hosts**
@@ -419,21 +384,19 @@ hxcli cluster storage-summary
 | **Phase** | **Component** | **Estimated Duration** | **8-Node Calculation** | **Notes** |
 |-----------|--------------|------------------------|-------------------------|-----------|
 | **Preparation** | Final pre-window checks (T-60m) | 60 minutes | - | Critical go/no-go validation before starting |
-| **Step 1** | vCenter upgrade to v8.0.x | 60-90 minutes | - | Stage 1 & 2 upgrade per VMware KB + buffer |
-| **Step 2** | UCS Infrastructure (FI A/B) upgrade | 30-60 minutes | - | Sequential FI upgrade with HA preservation |
-| **Step 2B** | Subordinate FI upgrade | 20-30 minutes | - | First FI reboot and validation |
-| **Step 2D** | Primary FI upgrade | 20-30 minutes | - | Second FI reboot with brief single-homing |
-| **Step 3a** | UCS Server Firmware (HUU) rolling | 4-6 hours | 8 nodes × 20-40 min | **Major time component** - sequential node upgrades |
-| **Step 3b** | HXDP upgrade to 5.5(2b) | 60-120 minutes | 8 CVMs sequential | Rolling CVM upgrades + validation |
-| **Step 3c** | ESXi host upgrade to 8.0 U3 | 6-12 hours | 8 hosts × 45-90 min | **Largest time component** - rolling host upgrades |
-| **Step 4** | Post-validation and service restoration | 60-90 minutes | - | Comprehensive testing and service re-enablement |
+| **Step 1** | HXDP upgrade to 5.5(2b) | 60-120 minutes | 8 CVMs sequential | Rolling CVM upgrades + health gates |
+| **Step 2** | vCenter upgrade to 8.0 U3 | 60-90 minutes | - | Stage 1 & 2 + validation buffer |
+| **Step 3** | ESXi host upgrade to 8.0 U3 | 6-12 hours | 8 hosts × 45-90 min | Largest rolling component (one host at a time) |
+| **Step 4** | FI Infrastructure (A/B) 4.2(3h)→4.2(3o) | 30-60 minutes | - | Subordinate then primary with HA checks |
+| **Step 5** | Server Firmware (HUU) rolling 4.2(3o) | 4-6 hours | 8 nodes × 20-40 min | Sequential node firmware alignment |
+| **Step 6** | Post-validation & service restoration | 60-90 minutes | - | Comprehensive functional + integrity testing |
 
-**Total Estimated Window:** 14-21 hours (conservative estimate for 8-node cluster)
+**Total Estimated Window:** 14-21 hours (conservative estimate; overlap limited due to sequential safeguards)
 
 **Critical Path Components:**
-- **UCS Server Firmware (HUU)**: 4-6 hours
-- **ESXi Host Upgrades**: 6-12 hours  
-- **Combined**: 10-18 hours for core rolling upgrades
+- **ESXi Host Upgrades**: 6-12 hours
+- **Server Firmware (HUU)**: 4-6 hours
+- **Combined Rolling (Hosts + HUU)**: 10-18 hours
 
 **Additional Considerations:**
 - Network speed affects bundle upload times
@@ -443,10 +406,11 @@ hxcli cluster storage-summary
 
 
 **Critical Variables Affecting Time:**
-- Number of UCS servers (affects HUU duration)
-- Number of ESXi hosts (affects host upgrade duration)
-- HyperFlex cluster size (affects HXDP upgrade duration)
-- Network speed and bundle upload times
-- Any unexpected issues requiring troubleshooting
+- Number of ESXi hosts (host rolling duration)
+- Number of UCS servers (HUU rolling duration)
+- HyperFlex CVM count (HXDP sequential CVM time)
+- Network throughput (bundle upload / image staging)
+- Rebuild / resync backlog (may pause between hosts)
+- Unexpected remediation (faults, TAC investigations)
 
 
