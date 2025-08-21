@@ -17,27 +17,27 @@ This document follows the Cisco-prescribed upgrade sequence for Fabric Interconn
 
 ```mermaid
 flowchart TD
-  A[Start Upgrade Process] --> B[Pre-Window Checklist & Inventory<br/>48-72 hrs before]
+  A[Start Upgrade Process] --> B[Pre-Window Checklist & Inventory]
   B --> C{All Prereqs Complete?}
   C -->|No| B
-  C -->|Yes| D[Final Pre-Window Checks<br/>T-60m]
+  C -->|Yes| D[Final Pre-Window Checks]
 
-  D --> E[Step 1: HXDP 5.0.2e→5.5(2b)<br/>60-120m]
+  D --> E[Step 1 HXDP 5.0.2e to 5.5(2b) 60-120m]
   E --> F{HXDP Success?}
   F -->|No| G[Stop & TAC]
-  F -->|Yes| H[Step 2: vCenter 7.0U3→8.0U3<br/>60-90m]
+  F -->|Yes| H[Step 2 vCenter 7.0U3 to 8.0U3 60-90m]
 
   H --> I{vCenter Success?}
   I -->|No| J[Rollback vCenter & TAC]
-  I -->|Yes| K[Step 3: ESXi 7.0U3→8.0U3 (Rolling)<br/>45-90m/host]
+  I -->|Yes| K[Step 3 ESXi 7.0U3 to 8.0U3 Rolling 45-90m/host]
 
   K --> L{All Hosts Success?}
   L -->|No| M[Rollback Host & TAC]
-  L -->|Yes| N[Step 4: FI 4.2(3h)→4.2(3o)<br/>30-60m]
+  L -->|Yes| N[Step 4 FI 4.2(3h) to 4.2(3o) 30-60m]
 
   N --> O{FI Success?}
   O -->|No| P[Rollback FI & TAC]
-  O -->|Yes| Q[Step 5: Server FW to 4.2(3o)<br/>20-40m/node]
+  O -->|Yes| Q[Step 5 Server FW to 4.2(3o) 20-40m/node]
 
   Q --> R{All Nodes Success?}
   R -->|No| S[Stop HUU & TAC]
@@ -68,10 +68,6 @@ HX-ESXi-8.0U3-24674464-Cisco-Custom-8.0.3.7-upgrade-bundle.zip
 ucs-6400-k9-bundle-infra.4.2.3o.A.bin
 ucs-k9-bundle-b-series.4.2.3o.B.bin
 ucs-k9-bundle-c-series.4.2.3o.C.bin
-
-Note: `ucs-6400-k9-bundle-infra.4.3.5d.A.bin` intentionally omitted in safe sequence (remaining on 4.2 train).
-
-
 
 
 ## Preflight
@@ -399,10 +395,7 @@ hxcli cluster storage-summary
 - **Combined Rolling (Hosts + HUU)**: 10-18 hours
 
 **Additional Considerations:**
-- Network speed affects bundle upload times
 - Any troubleshooting adds time
-- Can be split across multiple maintenance windows if needed
-- Non-production environment allows for extended weekday windows
 
 
 **Critical Variables Affecting Time:**
